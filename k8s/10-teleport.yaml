@@ -36,9 +36,12 @@ spec:
     spec:
       containers:
         - name: teleport
-          # NOTE: the canonical image is teleport-distroless, not teleport.
-          # The latter doesn't exist on public.ecr.aws / its tags differ.
           image: public.ecr.aws/gravitational/teleport-distroless:15.4.0
+          # Explicit command + args so we control the full argv unambiguously.
+          # The image's default ENTRYPOINT is 'teleport', which means passing
+          # args alone gets you 'teleport teleport start ...' — that produces
+          # the cryptic 'teleport: error: unexpected start' message.
+          command: ['/usr/local/bin/teleport']
           args: ['start', '-c', '/etc/teleport/teleport.yaml']
           ports:
             - { containerPort: 3025, name: auth }
