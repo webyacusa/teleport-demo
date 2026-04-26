@@ -1,10 +1,6 @@
-# Teleport Access Lists. These are managed group memberships that
-# grant Teleport roles to their members. BAMOE's job is to add and
-# remove members from these lists based on the business workflow.
-#
-# Each Access List has a recurring review cadence — Teleport will
-# remind owners to re-attest the membership. This is huge for SOX/
-# compliance customers.
+# Teleport Access Lists. Each list grants its members a Teleport role and
+# carries a recurring review cadence. BAMOE adds users as members based on
+# the business workflow.
 
 kind: access_list
 version: v1
@@ -20,7 +16,7 @@ spec:
       description: 'Default owner'
   audit:
     recurrence:
-      frequency: 3   # quarterly review
+      frequency: '3months'
   membership_requires:
     roles: []
   ownership_requires:
@@ -41,7 +37,7 @@ spec:
     - name: 'admin'
   audit:
     recurrence:
-      frequency: 3
+      frequency: '3months'
   grants:
     roles:
       - maximo-planner
@@ -58,7 +54,7 @@ spec:
     - name: 'admin'
   audit:
     recurrence:
-      frequency: 1   # monthly review for elevated access
+      frequency: '1month'
   grants:
     roles:
       - maximo-supervisor
@@ -75,7 +71,7 @@ spec:
     - name: 'admin'
   audit:
     recurrence:
-      frequency: 6
+      frequency: '6months'
   grants:
     roles:
       - maximo-viewer

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: sailpoint-mock
-          image: bamoe-demo/sailpoint-mock:1.0.0
+          image: teleport-demo/sailpoint-mock:1.0.0
           imagePullPolicy: IfNotPresent
           env:
             - { name: BAMOE_URL, value: "http://bamoe-service:8080" }
@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: training-lms-mock
-          image: bamoe-demo/training-lms-mock:1.0.0
+          image: teleport-demo/training-lms-mock:1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - { containerPort: 3001, name: http }
@@ -79,7 +79,7 @@ spec:
     spec:
       containers:
         - name: notification-mock
-          image: bamoe-demo/notification-mock:1.0.0
+          image: teleport-demo/notification-mock:1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - { containerPort: 3003, name: http }

@@ -1,7 +1,7 @@
 # Multi-stage: pull tctl from the official Teleport image, then ship it
 # with a Node.js runtime so we can wrap it behind a clean REST API.
 
-FROM public.ecr.aws/gravitational/teleport-distroless:15.4.0 AS teleport
+FROM public.ecr.aws/gravitational/teleport-distroless:17.4.4 AS teleport
 
 FROM node:20-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*

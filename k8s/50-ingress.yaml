@@ -28,13 +28,8 @@ spec:
             backend:
               service: { name: bamoe-service, port: { number: 8080 } }
 
-    - host: teleport.localtest.me
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: teleport, port: { number: 3080 } }
+    # Teleport itself is no longer in-cluster — it lives at
+    # https://yellow-glitter.trial.teleport.sh
 
     - host: sailpoint.localtest.me
       http:

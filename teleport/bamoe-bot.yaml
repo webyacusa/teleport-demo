@@ -1,17 +1,22 @@
-# Bot role granting BAMOE service the minimum permissions it needs:
-# create users, manage Access List membership. Nothing else.
-# This demonstrates Teleport's least-privilege machine identity pattern.
+# Service identity for the BAMOE adapter.
+#
+# We use a regular Teleport user (not a `kind: bot`) here because the demo
+# generates a long-lived identity file via `tctl auth sign --user=bamoe-bot`.
+# In production you'd replace this with a real Machine ID `bot` resource +
+# `tbot` daemon that rotates certificates every hour automatically. The
+# narrative for the panel: this is the demo on-ramp; production hardening
+# is a one-line config change.
 
 kind: role
 version: v7
 metadata:
   name: bamoe-bot
-  description: "BAMOE service — provisioning automation"
+  description: 'BAMOE service — provisioning automation'
 spec:
   allow:
     rules:
       - resources: ['user']
-        verbs: ['create', 'read', 'update']
+        verbs: ['create', 'read', 'update', 'list']
       - resources: ['access_list']
         verbs: ['read', 'list']
       - resources: ['access_list_member']
@@ -19,12 +24,10 @@ spec:
       - resources: ['role']
         verbs: ['read', 'list']
 ---
-# The bot itself — Teleport will issue short-lived certificates to
-# whatever process holds the bot's join token.
-kind: bot
-version: v1
+kind: user
+version: v2
 metadata:
   name: bamoe-bot
+  description: 'Service account used by the BAMOE adapter'
 spec:
   roles: ['bamoe-bot']
-  traits: []

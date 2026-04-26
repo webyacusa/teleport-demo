@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
@@ -15,16 +16,6 @@ import com.ibm.bamoe.access.model.AccessRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-/**
- * Orchestrates the access provisioning workflow.
- *
- * The same flow that previously lived in BPMN — fetch training, validate
- * compliance, create a manager task on success, on approval call Teleport
- * to provision the user and add them to the right access list, then notify.
- *
- * State is held in-memory (good enough for the demo). Pending manager
- * tasks are exposed via REST for the operator UI.
- */
 @ApplicationScoped
 public class WorkflowOrchestrator {
 
@@ -34,6 +25,10 @@ public class WorkflowOrchestrator {
     @Inject @RestClient NotificationClient notificationClient;
     @Inject TrainingComplianceService complianceService;
     @Inject TeleportService teleportService;
+
+    @ConfigProperty(name = "teleport.proxy.public-url",
+                    defaultValue = "yellow-glitter.trial.teleport.sh")
+    String teleportProxyUrl;
 
     private final Map<String, AccessRequest> requestsByRequestId = new ConcurrentHashMap<>();
     private final Map<String, String> taskIdToRequestId = new ConcurrentHashMap<>();
@@ -51,7 +46,6 @@ public class WorkflowOrchestrator {
 
         LOG.infof("[AUDIT] requestId=%s userId=%s role=%s started", r.requestId, r.userId, r.role);
 
-        // Step 1: fetch training
         try {
             TrainingLmsClient.TrainingResponse resp = trainingClient.getCompletedModules(r.userId);
             r.completedModules = (resp != null && resp.completedModules != null) ? resp.completedModules : List.of();
@@ -61,7 +55,6 @@ public class WorkflowOrchestrator {
         }
         r.stepStatus.put("training", "DONE");
 
-        // Step 2: compliance check
         r.qualified = complianceService.isQualified(r.role, r.completedModules);
         if (!r.qualified) {
             r.stepStatus.put("training", "FAILED");
@@ -74,7 +67,6 @@ public class WorkflowOrchestrator {
             return r;
         }
 
-        // Step 3: create manager task — workflow pauses here
         r.pendingTaskId = "TASK-" + UUID.randomUUID().toString().substring(0, 8);
         r.stepStatus.put("manager", "PENDING");
         taskIdToRequestId.put(r.pendingTaskId, r.requestId);
@@ -103,7 +95,6 @@ public class WorkflowOrchestrator {
 
         r.stepStatus.put("manager", "DONE");
 
-        // Step 4: create user in Teleport
         try {
             teleportService.createUser(r.userId, r.firstName, r.lastName, r.email);
             r.stepStatus.put("teleport-user", "DONE");
@@ -116,7 +107,6 @@ public class WorkflowOrchestrator {
             return r;
         }
 
-        // Step 5: add to access list
         try {
             teleportService.addToAccessList(r.userId, r.role, r.requestId, r.managerNotes);
             r.stepStatus.put("access-list", "DONE");
@@ -151,7 +141,7 @@ public class WorkflowOrchestrator {
         ev.requestId = r.requestId; ev.to = r.email;
         ev.subject = "Your Maximo access is ready";
         ev.body = "Request " + r.requestId + " for role " + r.role + " has been provisioned in Teleport. "
-                + "Run 'tsh login --proxy=teleport.localtest.me' to receive your short-lived credentials.";
+                + "Run 'tsh login --proxy=" + teleportProxyUrl + "' to receive your short-lived credentials.";
         ev.severity = "INFO";
         try { notificationClient.send(ev); } catch (Exception e) { LOG.warn("Notify failed: " + e.getMessage()); }
     }

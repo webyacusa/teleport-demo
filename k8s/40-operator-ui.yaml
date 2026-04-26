@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: operator-ui
-          image: bamoe-demo/operator-ui:1.0.0
+          image: teleport-demo/operator-ui:1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - { containerPort: 80, name: http }
