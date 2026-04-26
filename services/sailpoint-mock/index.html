@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Access (SailPoint Mock)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; }
+  body { background: #0A1628; color: #F4F7FF; min-height: 100vh; padding: 40px 20px; }
+  .container { max-width: 800px; margin: 0 auto; }
+  .header { border-left: 4px solid #4589FF; padding: 12px 20px; margin-bottom: 30px; background: #0D2137; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .header .sub { color: #697D9E; font-size: 13px; }
+  .badge { display: inline-block; background: #0F62FE; color: white; font-size: 10px; padding: 3px 8px; border-radius: 3px; margin-right: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: #142033; border: 1px solid #1A2B45; padding: 24px; border-radius: 4px; margin-bottom: 20px; }
+  .card h2 { font-size: 16px; color: #4589FF; margin-bottom: 16px; }
+  label { display: block; color: #697D9E; font-size: 12px; margin-bottom: 6px; font-weight: 600; }
+  select, input { width: 100%; padding: 10px 12px; background: #0A1628; color: #F4F7FF; border: 1px solid #697D9E; border-radius: 3px; font-size: 14px; margin-bottom: 16px; }
+  button { background: #0F62FE; color: white; border: none; padding: 12px 32px; font-size: 14px; font-weight: 700; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+  button:hover { background: #4589FF; }
+  button:disabled { background: #697D9E; cursor: not-allowed; }
+  .result { margin-top: 20px; padding: 16px; background: #0A1628; border-left: 3px solid #24A148; font-family: Consolas, monospace; font-size: 12px; color: #42BE65; white-space: pre-wrap; max-height: 300px; overflow: auto; }
+  .result.error { border-left-color: #DA1E28; color: #FA4D56; }
+  .flex { display: flex; gap: 20px; }
+  .flex > div { flex: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><span class="badge">Mock</span>My Access</h1>
+    <div class="sub">Simulates SailPoint access-request approval events · Triggers BAMOE webhook</div>
+  </div>
+
+  <div class="card">
+    <h2>Trigger a New Access Approval</h2>
+    <div class="flex">
+      <div>
+        <label>Employee</label>
+        <select id="userId"></select>
+      </div>
+      <div>
+        <label>Requested Role</label>
+        <select id="role"></select>
+      </div>
+    </div>
+    <button onclick="trigger()" id="btn">Approve &amp; Send to BAMOE →</button>
+    <div id="result"></div>
+  </div>
+
+  <div class="card">
+    <h2>How this works</h2>
+    <div style="color: #697D9E; font-size: 13px; line-height: 1.7;">
+      In production, an employee would log in to SailPoint's "My Access" portal and request a role. Once approved
+      by governance policy, SailPoint fires an outbound webhook to BAMOE with the employee + role payload. This page
+      simulates that approval event. Pick an employee and role, click the button, and watch BAMOE pick up the workflow.
+    </div>
+  </div>
+</div>
+
+<script>
+const EMPLOYEES = {{EMPLOYEES}};
+const ROLES = {{ROLES}};
+
+const uSel = document.getElementById('userId');
+const rSel = document.getElementById('role');
+EMPLOYEES.forEach(e => {
+  const o = document.createElement('option');
+  o.value = e.userId; o.textContent = e.firstName + ' ' + e.lastName + ' (' + e.userId + ')';
+  uSel.appendChild(o);
+});
+ROLES.forEach(r => {
+  const o = document.createElement('option');
+  o.value = r; o.textContent = r;
+  rSel.appendChild(o);
+});
+
+async function trigger() {
+  const btn = document.getElementById('btn');
+  const result = document.getElementById('result');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  result.className = 'result'; result.textContent = '';
+  try {
+    const resp = await fetch('/api/trigger-approval', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: uSel.value, role: rSel.value })
+    });
+    const data = await resp.json();
+    result.textContent = 'SUCCESS · Request ID: ' + data.requestId + '\n\nBAMOE response: ' + JSON.stringify(data.bamoe, null, 2);
+  } catch (e) {
+    result.className = 'result error';
+    result.textContent = 'ERROR: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Approve & Send to BAMOE →';
+  }
+}
+</script>
+</body>
+</html>

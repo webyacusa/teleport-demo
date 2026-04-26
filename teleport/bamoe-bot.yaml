@@ -1,0 +1,30 @@
+# Bot role granting BAMOE service the minimum permissions it needs:
+# create users, manage Access List membership. Nothing else.
+# This demonstrates Teleport's least-privilege machine identity pattern.
+
+kind: role
+version: v7
+metadata:
+  name: bamoe-bot
+  description: "BAMOE service — provisioning automation"
+spec:
+  allow:
+    rules:
+      - resources: ['user']
+        verbs: ['create', 'read', 'update']
+      - resources: ['access_list']
+        verbs: ['read', 'list']
+      - resources: ['access_list_member']
+        verbs: ['create', 'list', 'read', 'update', 'delete']
+      - resources: ['role']
+        verbs: ['read', 'list']
+---
+# The bot itself — Teleport will issue short-lived certificates to
+# whatever process holds the bot's join token.
+kind: bot
+version: v1
+metadata:
+  name: bamoe-bot
+spec:
+  roles: ['bamoe-bot']
+  traits: []

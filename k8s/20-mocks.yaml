@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sailpoint-mock
+  namespace: bamoe-demo
+  labels: { app: sailpoint-mock }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: sailpoint-mock }
+  template:
+    metadata:
+      labels: { app: sailpoint-mock }
+    spec:
+      containers:
+        - name: sailpoint-mock
+          image: bamoe-demo/sailpoint-mock:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: BAMOE_URL, value: "http://bamoe-service:8080" }
+          ports:
+            - { containerPort: 3000, name: http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sailpoint-mock
+  namespace: bamoe-demo
+spec:
+  selector: { app: sailpoint-mock }
+  ports:
+    - { port: 3000, targetPort: 3000 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: training-lms-mock
+  namespace: bamoe-demo
+  labels: { app: training-lms-mock }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: training-lms-mock }
+  template:
+    metadata:
+      labels: { app: training-lms-mock }
+    spec:
+      containers:
+        - name: training-lms-mock
+          image: bamoe-demo/training-lms-mock:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { containerPort: 3001, name: http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: training-lms-mock
+  namespace: bamoe-demo
+spec:
+  selector: { app: training-lms-mock }
+  ports:
+    - { port: 3001, targetPort: 3001 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-mock
+  namespace: bamoe-demo
+  labels: { app: notification-mock }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: notification-mock }
+  template:
+    metadata:
+      labels: { app: notification-mock }
+    spec:
+      containers:
+        - name: notification-mock
+          image: bamoe-demo/notification-mock:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { containerPort: 3003, name: http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-mock
+  namespace: bamoe-demo
+spec:
+  selector: { app: notification-mock }
+  ports:
+    - { port: 3003, targetPort: 3003 }

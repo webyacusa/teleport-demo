@@ -1,0 +1,7 @@
+{
+  "name": "teleport-adapter",
+  "version": "1.0.0",
+  "description": "Thin REST adapter wrapping tctl for BAMOE integration",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" }
+}

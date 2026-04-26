@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bamoe-service
+  namespace: bamoe-demo
+  labels: { app: bamoe-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: bamoe-service }
+  template:
+    metadata:
+      labels: { app: bamoe-service }
+    spec:
+      containers:
+        - name: bamoe-service
+          image: teleport-demo/bamoe-service:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: QUARKUS_REST_CLIENT_TRAINING_LMS_URL, value: 'http://training-lms-mock:3001' }
+            - { name: QUARKUS_REST_CLIENT_NOTIFICATION_URL, value: 'http://notification-mock:3003' }
+            - { name: TELEPORT_ADAPTER_URL,                 value: 'http://teleport-adapter:3500' }
+          ports:
+            - { containerPort: 8080, name: http }
+          readinessProbe:
+            httpGet: { path: /q/health/ready, port: 8080 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /q/health/live, port: 8080 }
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests: { memory: '512Mi', cpu: '250m' }
+            limits:   { memory: '1Gi',   cpu: '1000m' }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bamoe-service
+  namespace: bamoe-demo
+spec:
+  selector: { app: bamoe-service }
+  ports:
+    - { port: 8080, targetPort: 8080 }

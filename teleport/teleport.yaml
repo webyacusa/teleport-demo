@@ -1,0 +1,30 @@
+# Teleport cluster config for the demo.
+# Standalone mode — auth + proxy in one process.
+# In production this would be replicated (3+ auth servers) and the
+# proxy would terminate TLS with real certificates.
+
+version: v3
+teleport:
+  nodename: teleport-demo
+  data_dir: /var/lib/teleport
+  log:
+    output: stderr
+    severity: INFO
+    format:
+      output: text
+
+auth_service:
+  enabled: true
+  listen_addr: 0.0.0.0:3025
+  cluster_name: maximo-demo.localtest.me
+  proxy_listener_mode: multiplex
+  authentication:
+    type: local
+    second_factor: 'off'   # demo only — production REQUIRES MFA
+
+proxy_service:
+  enabled: true
+  public_addr: ['teleport.localtest.me:443']
+  web_listen_addr: 0.0.0.0:3080
+  https_keypairs: []   # demo uses HTTP for simplicity
+  acme: {}

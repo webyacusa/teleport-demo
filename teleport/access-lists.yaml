@@ -1,0 +1,82 @@
+# Teleport Access Lists. These are managed group memberships that
+# grant Teleport roles to their members. BAMOE's job is to add and
+# remove members from these lists based on the business workflow.
+#
+# Each Access List has a recurring review cadence — Teleport will
+# remind owners to re-attest the membership. This is huge for SOX/
+# compliance customers.
+
+kind: access_list
+version: v1
+metadata:
+  name: maximo-engineers
+  labels:
+    business-unit: 'asset-management'
+spec:
+  title: 'Maximo Engineers'
+  description: 'Personnel with engineer-level Maximo access'
+  owners:
+    - name: 'admin'
+      description: 'Default owner'
+  audit:
+    recurrence:
+      frequency: 3   # quarterly review
+  membership_requires:
+    roles: []
+  ownership_requires:
+    roles: []
+  grants:
+    roles:
+      - maximo-engineer
+    traits: {}
+---
+kind: access_list
+version: v1
+metadata:
+  name: maximo-planners
+spec:
+  title: 'Maximo Planners'
+  description: 'Personnel with planner-level Maximo access'
+  owners:
+    - name: 'admin'
+  audit:
+    recurrence:
+      frequency: 3
+  grants:
+    roles:
+      - maximo-planner
+    traits: {}
+---
+kind: access_list
+version: v1
+metadata:
+  name: maximo-supervisors
+spec:
+  title: 'Maximo Supervisors'
+  description: 'Personnel with supervisor-level Maximo access (MFA required)'
+  owners:
+    - name: 'admin'
+  audit:
+    recurrence:
+      frequency: 1   # monthly review for elevated access
+  grants:
+    roles:
+      - maximo-supervisor
+    traits: {}
+---
+kind: access_list
+version: v1
+metadata:
+  name: maximo-viewers
+spec:
+  title: 'Maximo Viewers'
+  description: 'Read-only access to Maximo'
+  owners:
+    - name: 'admin'
+  audit:
+    recurrence:
+      frequency: 6
+  grants:
+    roles:
+      - maximo-viewer
+    traits: {}

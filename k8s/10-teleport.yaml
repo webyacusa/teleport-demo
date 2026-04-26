@@ -1,0 +1,71 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teleport-config
+  namespace: bamoe-demo
+data:
+  teleport.yaml: |
+    REPLACED_AT_DEPLOY_TIME
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: teleport-data
+  namespace: bamoe-demo
+spec:
+  accessModes: ['ReadWriteOnce']
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teleport
+  namespace: bamoe-demo
+  labels: { app: teleport }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: teleport }
+  template:
+    metadata:
+      labels: { app: teleport }
+    spec:
+      containers:
+        - name: teleport
+          # NOTE: the canonical image is teleport-distroless, not teleport.
+          # The latter doesn't exist on public.ecr.aws / its tags differ.
+          image: public.ecr.aws/gravitational/teleport-distroless:15.4.0
+          args: ['start', '-c', '/etc/teleport/teleport.yaml']
+          ports:
+            - { containerPort: 3025, name: auth }
+            - { containerPort: 3080, name: web  }
+          volumeMounts:
+            - { name: config, mountPath: /etc/teleport }
+            - { name: data,   mountPath: /var/lib/teleport }
+          readinessProbe:
+            tcpSocket: { port: 3080 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests: { memory: '256Mi', cpu: '100m' }
+            limits:   { memory: '768Mi', cpu: '1000m' }
+      volumes:
+        - name: config
+          configMap: { name: teleport-config }
+        - name: data
+          persistentVolumeClaim: { claimName: teleport-data }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teleport
+  namespace: bamoe-demo
+spec:
+  selector: { app: teleport }
+  ports:
+    - { port: 3025, targetPort: 3025, name: auth }
+    - { port: 3080, targetPort: 3080, name: web  }

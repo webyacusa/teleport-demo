@@ -1,0 +1,58 @@
+---
+# Secret holding the Teleport admin identity file used by the adapter.
+# This is created at bootstrap time by 03-deploy.sh after Teleport boots.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: teleport-bot-identity
+  namespace: bamoe-demo
+type: Opaque
+data:
+  identity: "PLACEHOLDER_FILLED_AT_DEPLOY_TIME"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teleport-adapter
+  namespace: bamoe-demo
+  labels: { app: teleport-adapter }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: teleport-adapter }
+  template:
+    metadata:
+      labels: { app: teleport-adapter }
+    spec:
+      containers:
+        - name: teleport-adapter
+          image: teleport-demo/teleport-adapter:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: TELEPORT_AUTH_SERVER,   value: 'teleport:3025' }
+            - { name: TELEPORT_CLUSTER_NAME,  value: 'maximo-demo.localtest.me' }
+            - { name: TELEPORT_IDENTITY_FILE, value: '/etc/teleport/identity' }
+          volumeMounts:
+            - { name: identity, mountPath: /etc/teleport, readOnly: true }
+          ports:
+            - { containerPort: 3500, name: http }
+          readinessProbe:
+            httpGet: { path: /health, port: 3500 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: identity
+          secret:
+            secretName: teleport-bot-identity
+            items:
+              - { key: identity, path: identity }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: teleport-adapter
+  namespace: bamoe-demo
+spec:
+  selector: { app: teleport-adapter }
+  ports:
+    - { port: 3500, targetPort: 3500 }

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manager Tasks — BAMOE Access Provisioning</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0A1628; color: #F4F7FF; min-height: 100vh; }
+  .topbar { background: #0D2137; border-bottom: 1px solid #1A2B45; padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar .brand { display: flex; align-items: center; gap: 14px; }
+  .topbar .brand .logo { width: 36px; height: 36px; background: #0F62FE; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; }
+  .topbar .brand h1 { font-size: 18px; font-weight: 700; }
+  .topbar .brand .sub { font-size: 11px; color: #697D9E; }
+  .nav { display: flex; gap: 4px; }
+  .nav a { padding: 10px 18px; color: #697D9E; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 4px; }
+  .nav a.active { background: #142033; color: #FF832B; }
+  .nav a:hover { color: #F4F7FF; }
+
+  .main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { color: #697D9E; font-size: 13px; margin-bottom: 28px; }
+
+  .task-grid { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
+  .task-list { background: #142033; border: 1px solid #1A2B45; border-radius: 6px; }
+  .task-list h2 { padding: 14px 20px; font-size: 13px; background: #FF832B; color: white; border-radius: 6px 6px 0 0; }
+  .task-item { padding: 16px 20px; border-top: 1px solid #1A2B45; cursor: pointer; }
+  .task-item:hover { background: #1A2B45; }
+  .task-item.selected { background: #1A2B45; border-left: 3px solid #FF832B; }
+  .task-item .name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .task-item .role { font-size: 11px; color: #697D9E; font-family: monospace; margin-bottom: 4px; }
+  .task-item .time { font-size: 11px; color: #F1C21B; }
+
+  .task-detail { background: #142033; border: 1px solid #1A2B45; border-radius: 6px; padding: 24px; }
+  .form-header { background: #0F62FE; color: white; padding: 12px 18px; margin: -24px -24px 24px -24px; border-radius: 6px 6px 0 0; font-weight: 700; font-size: 13px; }
+
+  .field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .field { background: #0A1628; border: 1px solid #1A2B45; padding: 12px 14px; border-radius: 4px; }
+  .field .label { font-size: 10px; color: #697D9E; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .field .value { font-size: 13px; color: #F4F7FF; }
+  .field.good .value { color: #42BE65; }
+  .field.bad .value  { color: #FA4D56; }
+
+  textarea { width: 100%; padding: 10px; background: #0A1628; color: #F4F7FF; border: 1px solid #697D9E; border-radius: 4px; font-family: inherit; font-size: 13px; resize: vertical; min-height: 80px; }
+  .btns { display: flex; gap: 10px; margin-top: 16px; }
+  button { border: none; padding: 12px 24px; font-size: 13px; font-weight: 700; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+  .btn-approve { background: #24A148; color: white; }
+  .btn-approve:hover { background: #42BE65; }
+  .btn-reject { background: #DA1E28; color: white; }
+  .btn-reject:hover { background: #FA4D56; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .empty-state { padding: 60px 20px; text-align: center; color: #697D9E; }
+  .result { margin-top: 16px; padding: 12px; background: #0A1628; border-left: 3px solid #42BE65; font-size: 12px; }
+  .result.err { border-left-color: #FA4D56; color: #FA4D56; }
+
+  .training-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .training-list .mod { font-size: 10px; padding: 2px 8px; background: #15391F; color: #42BE65; border-radius: 2px; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">B</div>
+    <div>
+      <h1>BAMOE Access Provisioning</h1>
+      <div class="sub">Operator Console · Teleport-integrated</div>
+    </div>
+  </div>
+  <div class="nav">
+    <a href="index.html">Dashboard</a>
+    <a href="tasks.html" class="active">Manager Tasks</a>
+    <a href="notifications.html">Notifications</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">Manager Task Inbox</div>
+  <div class="page-sub">Pending manager approvals — the human-in-the-loop step</div>
+
+  <div class="task-grid">
+    <div class="task-list">
+      <h2>Open Tasks</h2>
+      <div id="list"></div>
+    </div>
+
+    <div class="task-detail" id="detail">
+      <div class="empty-state">Select a task from the list to review and approve or reject.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.BAMOE_URL || window.location.origin.replace('operator', 'bamoe');
+let selected = null;
+
+async function loadTasks() {
+  try {
+    const r = await fetch(API + '/api/tasks');
+    const tasks = r.ok ? await r.json() : [];
+    const listEl = document.getElementById('list');
+    if (!tasks.length) {
+      listEl.innerHTML = '<div class="empty-state" style="padding: 40px 20px;">No pending tasks</div>';
+      return;
+    }
+    listEl.innerHTML = tasks.map(t => {
+      const sel = selected && selected.taskId === t.taskId ? 'selected' : '';
+      return `<div class="task-item ${sel}" onclick='selectTask(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
+        <div class="name">${t.firstName} ${t.lastName}</div>
+        <div class="role">${t.role}</div>
+        <div class="time">Awaiting approval</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('list').innerHTML = '<div class="empty-state">Could not load tasks: ' + e.message + '</div>';
+  }
+}
+
+function selectTask(task) {
+  selected = task;
+  const modules = (task.completedModules || []);
+  const modulesHtml = modules.length
+    ? `<div class="training-list">${modules.map(m => `<span class="mod">${m}</span>`).join('')}</div>`
+    : '<span style="color: #FA4D56;">None</span>';
+
+  document.getElementById('detail').innerHTML = `
+    <div class="form-header">📋 Access Request Review — ${task.requestId}</div>
+
+    <div class="field-grid">
+      <div class="field">
+        <div class="label">Employee</div>
+        <div class="value">${task.firstName} ${task.lastName} (${task.userId})</div>
+      </div>
+      <div class="field">
+        <div class="label">Requested Role</div>
+        <div class="value">${task.role}</div>
+      </div>
+      <div class="field ${task.qualified ? 'good' : 'bad'}">
+        <div class="label">Training Status</div>
+        <div class="value">${task.qualified ? '✓ Qualified' : '✗ Missing modules'}</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom: 20px;">
+      <div class="label">Completed Training Modules</div>
+      <div class="value">${modulesHtml}</div>
+    </div>
+
+    <div class="field" style="margin-bottom: 16px;">
+      <div class="label">Email to Notify</div>
+      <div class="value">${task.email || '—'}</div>
+    </div>
+
+    <label style="display: block; font-size: 12px; color: #697D9E; font-weight: 600; margin-bottom: 6px;">Manager Notes</label>
+    <textarea id="notes" placeholder="Optional notes for the audit trail…"></textarea>
+
+    <div class="btns">
+      <button class="btn-approve" onclick="submit(true)">✓ Approve</button>
+      <button class="btn-reject"  onclick="submit(false)">✗ Reject</button>
+    </div>
+    <div id="result"></div>
+  `;
+  loadTasks();
+}
+
+async function submit(approved) {
+  const notes = document.getElementById('notes').value;
+  const res = document.getElementById('result');
+  try {
+    const resp = await fetch(API + '/api/tasks/' + selected.taskId + '/complete', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ approved, managerNotes: notes })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    res.className = 'result';
+    res.textContent = approved ? '✓ Approved — provisioning in progress' : '✗ Rejected — request closed';
+    setTimeout(() => {
+      selected = null;
+      loadTasks();
+      document.getElementById('detail').innerHTML = '<div class="empty-state">Select a task to review.</div>';
+    }, 1500);
+  } catch (e) {
+    res.className = 'result err';
+    res.textContent = 'Error: ' + e.message;
+  }
+}
+
+loadTasks();
+setInterval(loadTasks, 5000);
+</script>
+</body>
+</html>

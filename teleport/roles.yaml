@@ -1,0 +1,89 @@
+# Teleport Roles — one per Maximo access tier.
+# These are applied to Teleport at startup via the bootstrap script.
+# In a real deployment, these would live in a Git-managed config repo
+# and be applied via the Teleport Kubernetes Operator or `tctl create -f`.
+
+kind: role
+version: v7
+metadata:
+  name: maximo-engineer
+  description: "Maximo Engineer — full access to assets and work orders"
+spec:
+  options:
+    max_session_ttl: 8h
+    cert_format: standard
+    forward_agent: true
+  allow:
+    logins: ['{{internal.logins}}', 'maximo-engineer']
+    node_labels:
+      'env': 'maximo'
+      'role': '*'
+    kubernetes_groups: ['maximo-engineers']
+    app_labels:
+      'service': 'maximo'
+    db_labels:
+      'env': 'maximo'
+    db_users: ['maximo_engineer']
+    db_names: ['maximodb']
+    rules:
+      - resources: ['session']
+        verbs: ['list', 'read']
+---
+kind: role
+version: v7
+metadata:
+  name: maximo-planner
+  description: "Maximo Planner — planning and scheduling access"
+spec:
+  options:
+    max_session_ttl: 8h
+  allow:
+    logins: ['{{internal.logins}}', 'maximo-planner']
+    node_labels:
+      'env': 'maximo'
+      'role': 'planning'
+    kubernetes_groups: ['maximo-planners']
+    app_labels:
+      'service': 'maximo'
+    db_labels:
+      'env': 'maximo'
+    db_users: ['maximo_planner']
+    db_names: ['maximodb']
+---
+kind: role
+version: v7
+metadata:
+  name: maximo-supervisor
+  description: "Maximo Supervisor — oversight access including production sites"
+spec:
+  options:
+    max_session_ttl: 8h
+    require_session_mfa: true
+  allow:
+    logins: ['{{internal.logins}}', 'maximo-supervisor']
+    node_labels:
+      'env': 'maximo'
+    kubernetes_groups: ['maximo-supervisors', 'maximo-engineers']
+    app_labels:
+      'service': 'maximo'
+    db_labels:
+      'env': 'maximo'
+    db_users: ['maximo_supervisor']
+    db_names: ['maximodb']
+---
+kind: role
+version: v7
+metadata:
+  name: maximo-viewer
+  description: "Maximo Viewer — read-only access"
+spec:
+  options:
+    max_session_ttl: 4h
+  allow:
+    logins: ['maximo-viewer']
+    app_labels:
+      'service': 'maximo'
+    db_labels:
+      'env': 'maximo'
+    db_users: ['maximo_viewer']
+    db_names: ['maximodb']

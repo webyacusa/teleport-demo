@@ -1,0 +1,7 @@
+{
+  "name": "sailpoint-mock",
+  "version": "1.0.0",
+  "description": "Mock SailPoint / My Access that fires webhooks to BAMOE",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" }
+}

@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: operator-ui
+  namespace: bamoe-demo
+  labels: { app: operator-ui }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: operator-ui }
+  template:
+    metadata:
+      labels: { app: operator-ui }
+    spec:
+      containers:
+        - name: operator-ui
+          image: bamoe-demo/operator-ui:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { containerPort: 80, name: http }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: operator-ui
+  namespace: bamoe-demo
+spec:
+  selector: { app: operator-ui }
+  ports:
+    - { port: 80, targetPort: 80 }

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BAMOE Access Provisioning — Operator Console</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, "Segoe UI", sans-serif; background: #0A1628; color: #F4F7FF; min-height: 100vh; }
+
+  /* Top bar */
+  .topbar { background: #0D2137; border-bottom: 1px solid #1A2B45; padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar .brand { display: flex; align-items: center; gap: 14px; }
+  .topbar .brand .logo { width: 36px; height: 36px; background: #0F62FE; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; }
+  .topbar .brand h1 { font-size: 18px; font-weight: 700; }
+  .topbar .brand .sub { font-size: 11px; color: #697D9E; }
+  .nav { display: flex; gap: 4px; }
+  .nav a { padding: 10px 18px; color: #697D9E; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 4px; }
+  .nav a.active { background: #142033; color: #4589FF; }
+  .nav a:hover { color: #F4F7FF; }
+
+  /* Layout */
+  .main { padding: 32px; max-width: 1600px; margin: 0 auto; }
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { color: #697D9E; font-size: 13px; margin-bottom: 28px; }
+
+  /* KPI tiles */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .kpi { background: #142033; border: 1px solid; border-radius: 6px; padding: 20px; position: relative; overflow: hidden; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; background: var(--c); }
+  .kpi.total { border-color: #2A3F60; --c: #4589FF; }
+  .kpi.done  { border-color: #15391F; --c: #42BE65; }
+  .kpi.pend  { border-color: #3A2F08; --c: #F1C21B; }
+  .kpi.fail  { border-color: #3A0E10; --c: #FA4D56; }
+  .kpi .value { font-size: 40px; font-weight: 300; line-height: 1; color: var(--c); margin-bottom: 6px; }
+  .kpi .label { color: #697D9E; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+  /* Table */
+  .panel { background: #142033; border: 1px solid #1A2B45; border-radius: 6px; overflow: hidden; }
+  .panel-header { padding: 16px 20px; background: #1A2B45; border-bottom: 1px solid #1A2B45; display: flex; justify-content: space-between; align-items: center; }
+  .panel-header h2 { font-size: 14px; font-weight: 700; }
+  .panel-header .meta { font-size: 11px; color: #697D9E; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 12px 20px; background: #0F62FE; color: white; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+  td { padding: 12px 20px; border-top: 1px solid #1A2B45; vertical-align: middle; }
+  tr:hover { background: #1A2B45; }
+  tr.clickable { cursor: pointer; }
+  .reqid { font-family: Consolas, "SF Mono", monospace; font-size: 11px; color: #4589FF; }
+
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; border: 1px solid; text-align: center; min-width: 80px; }
+  .b-done    { color: #42BE65; border-color: #42BE65; background: rgba(66, 190, 101, 0.1); }
+  .b-pending { color: #F1C21B; border-color: #F1C21B; background: rgba(241, 194, 27, 0.1); }
+  .b-failed  { color: #FA4D56; border-color: #FA4D56; background: rgba(250, 77, 86, 0.1); }
+  .b-waiting { color: #697D9E; border-color: #697D9E; background: rgba(105, 125, 158, 0.05); }
+  .b-skipped { color: #697D9E; border-color: transparent; }
+
+  .empty { padding: 60px 20px; text-align: center; color: #697D9E; }
+  .empty .hint { font-size: 12px; margin-top: 8px; }
+
+  /* Notifications panel */
+  .notifications { margin-top: 28px; }
+  .notification { padding: 12px 20px; border-top: 1px solid #1A2B45; display: flex; gap: 12px; align-items: flex-start; }
+  .notification .sev { padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .sev.INFO { background: #15391F; color: #42BE65; }
+  .sev.WARN { background: #3A2F08; color: #F1C21B; }
+  .sev.ERROR { background: #3A0E10; color: #FA4D56; }
+  .notification .body { flex: 1; }
+  .notification .subject { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .notification .meta { font-size: 11px; color: #697D9E; }
+
+  .refresh { background: #0F62FE; color: white; border: none; padding: 6px 14px; font-size: 11px; font-weight: 700; border-radius: 3px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+  .refresh:hover { background: #4589FF; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">B</div>
+    <div>
+      <h1>BAMOE Access Provisioning</h1>
+      <div class="sub">Operator Console · Teleport-integrated</div>
+    </div>
+  </div>
+  <div class="nav">
+    <a href="index.html" class="active">Dashboard</a>
+    <a href="tasks.html">Manager Tasks</a>
+    <a href="notifications.html">Notifications</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">Request Status Dashboard</div>
+  <div class="page-sub">Live monitoring of access-provisioning requests across all integration steps</div>
+
+  <div class="kpis">
+    <div class="kpi total"><div class="value" id="k-total">0</div><div class="label">Total Requests</div></div>
+    <div class="kpi done"><div class="value" id="k-done">0</div><div class="label">Completed</div></div>
+    <div class="kpi pend"><div class="value" id="k-pend">0</div><div class="label">Pending</div></div>
+    <div class="kpi fail"><div class="value" id="k-fail">0</div><div class="label">Failed</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Access Requests</h2>
+      <div><span class="meta" id="updated">—</span> <button class="refresh" onclick="refresh()">Refresh</button></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Request ID</th>
+          <th>Employee</th>
+          <th>Role</th>
+          <th>Sailpoint</th>
+          <th>Training</th>
+          <th>Manager</th>
+          <th>Teleport User</th>
+          <th>Access List</th>
+          <th>Overall</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="9" class="empty">No requests yet. Trigger one from the SailPoint mock.<div class="hint">curl or visit <code>http://sailpoint.localtest.me</code></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const BAMOE = window.location.origin.replace('operator', 'bamoe');
+// When accessed via k8s ingress we use the relative host; when running locally you can override:
+const API = window.BAMOE_URL || (BAMOE.includes('localhost') ? 'http://localhost:8080' : BAMOE);
+
+const STATUS_CLASS = {
+  DONE: 'b-done',
+  PENDING: 'b-pending',
+  FAILED: 'b-failed',
+  WAITING: 'b-waiting',
+  SKIPPED: 'b-skipped',
+};
+const STATUS_LABEL = {
+  DONE: '✓ Done',
+  PENDING: '◷ Pending',
+  FAILED: '✗ Failed',
+  WAITING: '⏳ Waiting',
+  SKIPPED: '—',
+};
+
+function badge(status) {
+  const cls = STATUS_CLASS[status] || 'b-waiting';
+  const lbl = STATUS_LABEL[status] || status;
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+function overallStatus(steps) {
+  const values = Object.values(steps);
+  if (values.includes('FAILED')) return 'FAILED';
+  if (values.every(v => v === 'DONE')) return 'DONE';
+  return 'PENDING';
+}
+
+async function refresh() {
+  try {
+    const resp = await fetch(API + '/api/access-requests/dashboard');
+    const data = await resp.json();
+    document.getElementById('k-total').textContent = data.kpis.total;
+    document.getElementById('k-done').textContent = data.kpis.completed;
+    document.getElementById('k-pend').textContent = data.kpis.pending;
+    document.getElementById('k-fail').textContent = data.kpis.failed;
+
+    const tbody = document.getElementById('tbody');
+    if (!data.requests.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">No requests yet. Trigger one from the SailPoint mock.</td></tr>';
+    } else {
+      tbody.innerHTML = data.requests.map(r => {
+        const s = r.steps;
+        const overall = overallStatus(s);
+        return `<tr class="clickable" onclick="window.location='tasks.html?req=${r.requestId}'">
+          <td class="reqid">${r.requestId}</td>
+          <td>${r.employeeName}</td>
+          <td style="color: #697D9E; font-family: monospace; font-size: 11px;">${r.role}</td>
+          <td>${badge(s.sailpoint)}</td>
+          <td>${badge(s.training)}</td>
+          <td>${badge(s.manager)}</td>
+          <td>${badge(s['teleport-user'])}</td>
+          <td>${badge(s['access-list'])}</td>
+          <td>${badge(overall)}</td>
+        </tr>`;
+      }).join('');
+    }
+    document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById('updated').textContent = 'Error: ' + e.message;
+  }
+}
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

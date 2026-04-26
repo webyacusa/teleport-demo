@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Notifications — BAMOE Access Provisioning</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0A1628; color: #F4F7FF; min-height: 100vh; }
+  .topbar { background: #0D2137; border-bottom: 1px solid #1A2B45; padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar .brand { display: flex; align-items: center; gap: 14px; }
+  .topbar .brand .logo { width: 36px; height: 36px; background: #0F62FE; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; }
+  .topbar .brand h1 { font-size: 18px; font-weight: 700; }
+  .topbar .brand .sub { font-size: 11px; color: #697D9E; }
+  .nav { display: flex; gap: 4px; }
+  .nav a { padding: 10px 18px; color: #697D9E; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 4px; }
+  .nav a.active { background: #142033; color: #42BE65; }
+  .nav a:hover { color: #F4F7FF; }
+
+  .main { padding: 32px; max-width: 1200px; margin: 0 auto; }
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { color: #697D9E; font-size: 13px; margin-bottom: 28px; }
+
+  .panel { background: #142033; border: 1px solid #1A2B45; border-radius: 6px; overflow: hidden; }
+  .panel h2 { padding: 14px 20px; background: #1A2B45; font-size: 13px; font-weight: 700; }
+
+  .notif { padding: 16px 20px; border-top: 1px solid #1A2B45; display: grid; grid-template-columns: 80px 1fr 180px; gap: 16px; align-items: start; }
+  .sev { padding: 3px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; text-align: center; }
+  .sev.INFO { background: rgba(66, 190, 101, 0.15); color: #42BE65; border: 1px solid #42BE65; }
+  .sev.WARN { background: rgba(241, 194, 27, 0.15); color: #F1C21B; border: 1px solid #F1C21B; }
+  .sev.ERROR { background: rgba(250, 77, 86, 0.15); color: #FA4D56; border: 1px solid #FA4D56; }
+
+  .subject { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .body { font-size: 12px; color: #697D9E; }
+  .meta { font-size: 11px; color: #697D9E; text-align: right; }
+  .meta .to { color: #4589FF; font-family: monospace; margin-bottom: 3px; }
+
+  .empty { padding: 60px 20px; text-align: center; color: #697D9E; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo">B</div>
+    <div>
+      <h1>BAMOE Access Provisioning</h1>
+      <div class="sub">Operator Console · Teleport-integrated</div>
+    </div>
+  </div>
+  <div class="nav">
+    <a href="index.html">Dashboard</a>
+    <a href="tasks.html">Manager Tasks</a>
+    <a href="notifications.html" class="active">Notifications</a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">Notifications Log</div>
+  <div class="page-sub">Captured outbound messages to users and managers · ordered newest first</div>
+
+  <div class="panel">
+    <h2>Recent Events</h2>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+const NOTIFY_URL = window.NOTIFY_URL || window.location.origin.replace('operator', 'notification');
+
+async function refresh() {
+  try {
+    const r = await fetch(NOTIFY_URL + '/api/notifications');
+    const data = await r.json();
+    const log = document.getElementById('log');
+    if (!data.length) {
+      log.innerHTML = '<div class="empty">No notifications yet.</div>';
+      return;
+    }
+    log.innerHTML = data.map(n => `
+      <div class="notif">
+        <div class="sev ${n.severity || 'INFO'}">${n.severity || 'INFO'}</div>
+        <div>
+          <div class="subject">${n.subject || ''}</div>
+          <div class="body">${n.body || ''}</div>
+        </div>
+        <div class="meta">
+          <div class="to">${n.to || ''}</div>
+          <div>${n.requestId || ''}</div>
+          <div>${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('log').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+  }
+}
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>
