@@ -132,20 +132,18 @@ tctl get user/jdoe`
 
 ## Act 3 — How the orchestrator talks to Teleport (3 min)
 
-> **The "how does it actually work" beat.** Pre-sales interviewers want to see you can explain integration patterns clearly.
 
 **Show:** Open `services/teleport-adapter/server.js` or just talk through it.
 
 **Say:**
-"Quick architecture beat — because this is something customers ask in every Teleport conversation: 'how does our automation talk to Teleport securely?'
+"A question you might have is 'how does our automation talk to Teleport securely?'
 
 The pattern I'm using here is a thin adapter service that wraps `tctl`. The orchestrator calls clean REST endpoints; the adapter translates those into Teleport API calls. It's stateless, easy to security-review, and it's the on-ramp pattern Teleport recommends for customers who already have an internal automation framework.
 
-For this demo, the adapter authenticates using a session-scoped identity file I generated from my admin user with `tsh login --out`. **In production, this gets replaced with Teleport Machine ID** — `tbot` running as a sidecar to the adapter, joining via Kubernetes service-account tokens, with certificates rotating automatically every hour. I deliberately took the shorter path for the trial because `tbot` requires JWKS configuration that isn't worth the effort for a 14-day eval — but the architectural diagram and the threat model don't change. Same adapter, different identity provider underneath.
+For this demo, the adapter authenticates using a session-scoped identity file I generated from my admin user with `tsh login --out`. **In production, this gets replaced with Teleport Machine ID** — `tbot` running as a sidecar to the adapter, joining via Kubernetes service-account tokens, with certificates rotating automatically every hour. I deliberately took the shorter path for the trial to keep the infrastructure as simple as possible, but the architectural diagram and the threat model don't change. Same adapter, different identity provider underneath.
 
 The other integration pattern worth mentioning: for customers who are heavily GitOps-oriented, Teleport ships a Kubernetes Operator. Define users and Access Lists as Kubernetes Custom Resources, and the operator reconciles them into Teleport. Same outcome, different ergonomics. For a customer whose orchestration platform is *already* Kubernetes-native, that's where I'd lean."
 
-> **Why this matters:** You demonstrated you know multiple Teleport-recommended integration patterns and can articulate when each fits — and you were honest about the demo's tradeoffs. That's exactly what an SE does in front of a customer who asks an awkward question.
 
 ---
 

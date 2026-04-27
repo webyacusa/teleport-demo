@@ -9,17 +9,13 @@
  * replace this with a Teleport Machine ID bot (`tbot`) that rotates the
  * service's certificate every hour automatically — same pattern, just
  * with proper ephemeral credentials.
- *
- * This adapter is deliberately thin — it's the kind of integration shim
- * a customer would write themselves when wiring Teleport into a larger
- * automation platform.
  */
 
 const http = require('http');
 const { spawn } = require('child_process');
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
+const os = require('os');
 
 const PORT = 3500;
 const IDENTITY_FILE = process.env.TELEPORT_IDENTITY_FILE || '/etc/teleport/identity';
@@ -88,7 +84,7 @@ spec:
     lastname: ['${lastName}']
 `.trim();
 
-  await runTctl(['create', '-f'], userYaml);
+  await runTctl(['create', '-f', '--force'], userYaml);
   console.log(`[adapter] created user ${username}`);
   return { username, status: 'created' };
 }
@@ -96,26 +92,19 @@ spec:
 async function addToAccessList({ username, role, requestId, notes }) {
   const listName = roleToAccessList(role);
 
-  const memberYaml = `
-kind: access_list_member
-version: v1
-metadata:
-  name: ${username}
-spec:
-  access_list: ${listName}
-  name: ${username}
-  joined: '${new Date().toISOString()}'
-  added_by: bamoe-service
-  reason: "Provisioned via BAMOE workflow ${requestId || ''}: ${notes || ''}"
-`.trim();
+  // In Teleport 16+ Access List membership is managed via the dedicated
+  // `tctl acl users add` subcommand, NOT by creating an access_list_member
+  // YAML resource. The CLI signature is:
+  //   tctl acl users add <list> <user> [<expires>] [<reason>]
+  // Empty expires "" means never expires (the role's TTL still bounds session length).
+  const reason = `Provisioned via BAMOE workflow ${requestId || ''}: ${notes || ''}`.trim();
 
-  await runTctl(['create', '-f', '--force'], memberYaml);
+  await runTctl(['acl', 'users', 'add', listName, username, '', reason]);
   console.log(`[adapter] added ${username} → ${listName}`);
   return { username, accessList: listName, status: 'added' };
 }
 
 async function getAuditEntries(limit = 20) {
-  // Recent audit events — Teleport tags every change. Big selling point.
   try {
     const out = await runTctl(['events', 'export', '--types=user.create,access_list.member.create', '--limit=' + limit, '--format=json']);
     const lines = out.stdout.trim().split('\n').filter(Boolean);
