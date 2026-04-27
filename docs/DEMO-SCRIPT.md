@@ -173,11 +173,7 @@ The other integration pattern worth mentioning: for customers who are heavily Gi
 **Show:** Tab 4 → Activity → Audit Log.
 
 **Say:**
-"Let me show you a few things I'd specifically demo to a customer's audit and compliance team, because these are the moments that close deals.
-
-**One — every access change is in here, with structured fields.** I can filter by user, by resource, by time. I can export this. I can stream it to my SIEM. Let me filter on `user.create` events from the last few minutes — there's Jane's provisioning event, with the actor field showing it was the BAMOE bot, not a human admin."
-
-**Show:** Filter the audit log to `user.create` if you have time.
+"Say: "Here's the audit log, raw and chronological — every cluster event Teleport saw. You can search this UI and the basic filtering is fine for a quick spot-check. But — and this is what every audit team I've ever talked to wants — the real value is exporting this stream to your SIEM. Splunk, Datadog, Panther, Elastic, S3 — Teleport ships event-handler integrations for all of them. The customer's audit team isn't going to write Teleport queries; they're going to write Splunk queries against a thirty-day rolling window of every access event across their whole estate. The web UI is for the SE on a demo. The export is for the production audit story."
 
 "**Two — Access List reviews.** Teleport will automatically open a review every 90 days for the engineering list, every 30 days for supervisors. The list owner has to log in and explicitly re-attest. If they miss the deadline, members get auto-removed."
 
@@ -239,12 +235,3 @@ Yes — `*.trial.teleport.sh` is a 14-day Teleport Cloud trial. I deliberately b
 Teleport's published reference architecture handles this comfortably with three auth nodes, a Postgres or DynamoDB backend, and S3 for session recordings. The adapter scales horizontally; it's stateless. The orchestrator side is the customer's existing capacity. I'd want to see their actual provisioning volume before sizing the auth tier — is this 50 changes a day or 5,000? — but it's not the bottleneck in this architecture.
 
 ---
-
-## What you should *not* do
-
-- **Don't apologize for the orchestrator.** It's the integration layer, full stop. Treat it the way a Salesforce SE treats whatever ESB the customer happens to use.
-- **Don't over-explain what Teleport is.** The interviewers know. Use product names without defining them. "Access Lists," "Machine ID," "tbot," "audit log" — speak Teleport.
-- **Don't get pulled into a deep-dive on the orchestrator's internals.** If asked, deflect: "the orchestrator is whatever the customer already runs — what matters is the integration contract with Teleport, which is consistent regardless."
-- **Don't wing the live `tsh login`.** If your network is iffy or you haven't pre-set Jane's password, skip it — show `tctl get user/jdoe` instead. The proof is that the user exists and is in the right Access List.
-- **Don't forget to regenerate the bot identity file before the demo.** It expires every ~12 hours. Run the four commands at the top of this script ~30 minutes before the call.
-- **Don't try to navigate Teleport's UI cold.** Click through the Users → Access Lists → Audit Log path *before* the demo so muscle memory is there. The Teleport UI is intuitive but a fumbling presenter looks worse than a fumbling product.
