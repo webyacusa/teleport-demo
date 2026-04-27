@@ -123,14 +123,10 @@ tctl get user/jdoe
 **Show:** Live `tsh login` — back to terminal:
 
 ```bash
-tsh login --proxy=yellow-glitter.trial.teleport.sh --user=jdoe
+tctl get user/jdoe`
 ```
 
-show `tctl get user/jdoe` instead. The point is showing the user got created with the right grants, not necessarily logging in as her.)
-
-"Once Jane has her credentials, `tsh apps ls` shows her the Maximo app. `tsh db ls` shows her the Maximo database. Unified access, one credential, everything audited."
-
-> **This is the moment Teleport hiring managers will be evaluating most closely.** You've shown: Access Lists, audit log, short-lived certs, the API integration. That's the core product surface.
+"In production, the customer's identity provider — Okta, Azure AD, whatever — federates into Teleport via SAML or OIDC. So Jane's password is never set in Teleport directly; she logs in with her corporate SSO and Teleport mints a short-lived cert based on her group memberships. For this trial demo I haven't wired up an external IdP, but in a real customer deployment that's how it works.
 
 ---
 
