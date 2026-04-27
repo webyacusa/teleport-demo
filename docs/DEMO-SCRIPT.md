@@ -50,15 +50,18 @@ Then open these tabs in your browser, in this order (left → right):
 > **Don't dive into the demo cold.** Open by anchoring it in a customer scenario.
 
 **Say:**
-"Before I show you anything, let me set the scene. I want to walk you through how I'd approach a customer demo for someone in our typical buying motion — a mid-sized organization, on-premise plus AWS, with an audit finding around how access is granted to their core operational system. In this case, that system is IBM Maximo, but the pattern is identical for Snowflake, RDS, EKS, anything Teleport protects.
+"Before I show you anything, I want to say that I never do demos without proper discovery, so I am going to walk you through this as if this was a case study that I am presenting to a client that has a similiar issue — a mid-sized organization, on-premise plus AWS, with an audit finding around how access is granted to their core operational system. In this case, that system is IBM Maximo, but the pattern is identical for Snowflake, RDS, EKS, anything Teleport protects.
 
-The problem they have today: their access provisioning is a 3-to-5-day ticket-driven process. SailPoint approves the request, an admin opens an IT ticket, someone manually checks training compliance, the manager gets emailed, the admin manually creates a Maximo account, manually assigns groups, and there's no unified audit trail. Their auditor flagged it as a SOX/SOC2 weakness.
+IBM Maximo is an enterprise asset management (EAM) platform designed to help organizations track, maintain, and optimize their high-value physical assets throughout their entire lifecycle.
+
+The problem they have today: their access provisioning is a 3-to-5-day ticket-driven process. The way it works is that when they are onboarding new employees to be Maximo users, they have to make sure that they complete all the required training. SailPoint approves the request, an admin opens an IT ticket, someone manually checks training compliance, the manager gets emailed, the admin manually creates a Maximo account, manually assigns groups, and there's no unified audit trail. 
+
+**USE THE DRAW IO IMAGE** 
 
 What we're going to do is show them what it looks like when **Teleport is the access plane** and their existing governance workflow drives it. They keep their SailPoint approval flow. They keep their training compliance rules. They get rid of the ticket queue, they get rid of long-lived passwords, and every access change is in Teleport's audit log.
 
-For this demo, I'm running everything against my own Teleport Cloud trial tenant — the same product a customer evaluates on day one. Let me show you."
+For this demo, I'm running everything against my own Teleport Cloud trial tenant. Let me show you."
 
-> **Why this opening matters:** Pre-sales interviewers are listening for whether you lead with the *customer's problem*, not the product. You did. And calling out the trial tenant up-front is honest and on-brand — they'll recognize the URL anyway.
 
 ---
 
@@ -111,7 +114,7 @@ tctl get user/jdoe
 
 **Two** — the membership has provenance metadata: the request ID from the original SailPoint approval, plus the manager's notes. Every membership has an audit story going all the way back to who approved what, when.
 
-**Three** — and this is the big one for any zero-trust conversation — Jane doesn't have a password to Maximo. She doesn't have a long-lived credential anywhere. When she logs into Teleport, she gets a short-lived certificate — typically 8 hours — that her Maximo session uses. When that cert expires, she re-authenticates. There's no password to phish, no credential to leak, no offboarding gap."
+**Three** — and this is the big one for any zero-trust conversation — Jane doesn't have a password to Maximo. She doesn't have a long-lived credential anywhere. When she logs into Teleport, she gets a short-lived certificate that her Maximo session uses. When that cert expires, she re-authenticates. There's no password to phish, no credential to leak, no offboarding gap."
 
 **Show:** Tab 4 → **Activity → Audit Log**.
 
